@@ -1,0 +1,114 @@
+body{
+	font-size:11px;
+	background-color: #F1F1F1
+}
+
+h1{
+	font-size:20px;
+}
+
+h3{
+	font-size: 16px;
+}
+
+.h1, .h2, .h3, h1, h2, h3 {
+	margin:2px;
+	font-weight: normal;
+}
+
+label{
+	font-weight: normal;
+}
+
+.right {
+	text-align: right;
+}
+
+#header_section{
+	height: 50px;
+	vertical-align: middle;
+}
+
+#header_logo{
+	width: 200px;
+	display: block;
+	float: left;
+}
+
+#header_right{
+	display: block;
+	float: right;
+}
+
+#appmenu.k-menu{
+	background-color: #000;
+	color: #fff;
+	padding: 0px;
+}
+
+#appmenu .k-link .k-icon{
+	display: none;
+}
+
+#appmenu.k-menu .k-item > .k-link{
+	padding:10px;
+	font-weight: normal;
+}
+
+#appmenu ul.k-popup .k-item > .k-link {
+	min-width: 150px;
+	padding-top:15px;
+	padding-bottom:15px;
+	border-bottom: solid 1px #ddd;
+}
+
+.navbar
+{
+	min-height: 60px;
+	margin-bottom: 0px;
+	background-color: #fff;
+}
+
+.navbar-brand{
+	margin:0px;
+	padding:0px;
+	padding-top:5px;
+}
+
+#content-container{
+	margin:0px;
+	margin-left:2px;
+}
+
+.grid-select{
+	width:100%;height:100%;display:block;
+	text-decoration: underline;
+}
+
+.grid-select:hover{
+	padding:0px;
+	background-color: whitesmoke;
+	color: #888;
+}
+
+.panel-heading{
+	border-bottom-style: none;
+	padding:5px;
+}
+
+.panel-heading > .panel-title{
+	padding:0px;
+}
+
+.panel-body{
+	padding:5px;
+	padding-top:10px;
+}
+
+.nav-tabs{
+	margin-top:0px;
+}
+
+.no-border{
+	border:none;
+}
