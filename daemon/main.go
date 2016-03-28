@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/eaciit/dbox"
 	_ "github.com/eaciit/dbox/dbc/mongo"
@@ -14,9 +15,12 @@ import (
 	"github.com/eaciit/uklam"
 )
 
-var log *toolkit.LogEngine
-var cdone chan bool
-var status string
+var (
+	log    *toolkit.LogEngine
+	cdone  chan bool
+	status string
+	path   = "/users/ariefdarmawan/Dropbox/pvt/Temp/bhesada"
+)
 
 func main() {
 	toolkit.Println("WF Monitor Deamon v0.5 (c) EACIIT")
@@ -50,7 +54,7 @@ func main() {
 	cdone = make(chan bool)
 	http.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
 		cdone <- true
-        w.Write([]byte("Daemon will be stopped"))
+		w.Write([]byte("Daemon will be stopped"))
 	})
 
 	go func() {
@@ -73,20 +77,21 @@ func main() {
 	}
 }
 
-var path = "/users/ariefdarmawan/Dropbox/pvt/Temp/bhesada"
-
 func prepareInbox() *uklam.FSWalker {
 	w := uklam.NewFS(filepath.Join(path, "inbox"))
 	w.EachFn = func(dw uklam.IDataWalker, in toolkit.M, info os.FileInfo, r *toolkit.Result) {
+		//go func(info os.FileInfo) {
 		sourcename := filepath.Join(path, "inbox", info.Name())
 		dstname := filepath.Join(path, "running", info.Name())
-		toolkit.Printf("Processing %s...", sourcename)
+		log.Info(toolkit.Sprintf("Processing " + sourcename))
 		e := uklam.FSCopy(sourcename, dstname, true)
 		if e != nil {
-			toolkit.Println(e.Error())
+			log.Error("Processing " + sourcename + " NOK " + e.Error())
 		} else {
-			toolkit.Println("OK")
+			log.Info("Processing " + sourcename + " OK ")
 		}
+		//time.Sleep(100 * time.Millisecond)
+		//}(info)
 	}
 	return w
 }
@@ -94,28 +99,33 @@ func prepareInbox() *uklam.FSWalker {
 func prepareRunning() *uklam.FSWalker {
 	w2 := uklam.NewFS(filepath.Join(path, "running"))
 	w2.EachFn = func(dw uklam.IDataWalker, in toolkit.M, info os.FileInfo, r *toolkit.Result) {
+		//go func(info os.FileInfo) {
+		//time.Sleep(10 * time.Millisecond)
 		sourcename := filepath.Join(path, "running", info.Name())
 		dstnameOK := filepath.Join(path, "success", info.Name())
 		dstnameNOK := filepath.Join(path, "fail", info.Name())
-		toolkit.Printf("Processing %s...", sourcename)
-		e := streamit(sourcename)
+		log.Info(toolkit.Sprintf("Reading %s", sourcename))
+		e := streamDo(sourcename)
+		//time.Sleep(100*time.Millisecond)
 		if e == nil {
 			uklam.FSCopy(sourcename, dstnameOK, true)
-			toolkit.Println("OK")
+			log.Info(toolkit.Sprintf("%s OK", sourcename))
 		} else {
 			uklam.FSCopy(sourcename, dstnameNOK, true)
-			toolkit.Println("NOK " + e.Error())
+			log.Error(toolkit.Sprintf("%s NOK: %s", sourcename, e.Error()))
 		}
+		//}(info)
 	}
 	return w2
 }
 
-func streamit(src string) error {
+func streamDo(src string) error {
 	f, _ := os.Open(src)
 	defer f.Close()
 
 	b := bufio.NewScanner(f)
 	b.Split(bufio.ScanLines)
+	dates := map[time.Time]int{}
 
 	i := 0
 	for b.Scan() {
@@ -123,6 +133,7 @@ func streamit(src string) error {
 			str := strings.Split(b.Text(), ",")
 			scada := new(wfmonitor.Scada)
 			scada.Timestamp = toolkit.String2Date(str[0], "YYYYMMddHHmmss")
+			scada.TransDate = toolkit.String2Date(toolkit.Date2String(scada.Timestamp, "YYYYMMdd"), "YYYYMMdd")
 			scada.Turbine = str[1][len(str[1])-6:]
 			scada.Speed = toolkit.ToFloat32(str[2], 2, toolkit.RoundingAuto)
 			scada.Direction = toolkit.ToFloat32(str[3], 2, toolkit.RoundingAuto)
@@ -137,11 +148,34 @@ func streamit(src string) error {
 			scada.FullTime = scada.FailureTime + scada.ConnectTime
 			scada.Power = toolkit.ToFloat64(str[5], 2, toolkit.RoundingAuto) * float64(scada.FullTime) / float64(60) / float64(1000)
 			scada.Temp = toolkit.ToFloat32(str[8], 2, toolkit.RoundingAuto)
-			wfmonitor.DB().Save(scada)
-			toolkit.Println(toolkit.JsonString(scada))
+            scada.Created = time.Now()
+			esave := wfmonitor.DB().Save(scada)
+			if esave == nil {
+				if _, exist := dates[scada.TransDate]; !exist {
+					dates[scada.TransDate] = 1
+				}
+			}
+			//toolkit.Println(toolkit.JsonString(scada))
 		}
 		i++
 	}
 
+	//go func() {
+		if len(dates) > 0 {
+			dateslice := func() []time.Time {
+				var ds []time.Time
+				for d, _ := range dates {
+					ds = append(ds, d)
+				}
+				return ds
+			}()
+
+			log.Info("Building logs")
+			wfmonitor.BuildLatest(dateslice)
+
+			log.Info("Building Summary Model")
+			wfmonitor.BuildSummary(dateslice)
+		}
+	//}()
 	return nil
 }

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="{{BaseUrl}}static/kendoui/js/jquery.min.js"></script>
+	<script src="{{BaseUrl}}static/kendoui/js/kendo.all.min.js"></script>
+	<script src="{{BaseUrl}}static/bootstrap/js/bootstrap.min.js"></script>
+	<script src="{{BaseUrl}}static/js/knockout.min.js"></script>
+	<script src="{{BaseUrl}}static/js/ko-mapping.js"></script>
+	<script src="{{BaseUrl}}static/js/knockout-kendo.min.js"></script>
+	<script src="{{BaseUrl}}static/js/ec-common.js"></script>
+	
+	<link href="{{BaseUrl}}static/kendoui/styles/kendo.material.min.css" type="tcss" rel="stylesheet" />
+	<link href="{{BaseUrl}}static/kendoui/styles/kendo.common-bootstrap.min.css" type="tcss" rel="stylesheet" />
+	<link href="{{BaseUrl}}static/kendoui/styles/kendo.dataviz.min.css" type="tcss" rel="stylesheet" />
+	<link href="{{BaseUrl}}static/kendoui/styles/kendo.dataviz.bootstrap.min.css" type="tcss" rel="stylesheet" />
+	
+    
+    <link rel="stylesheet" type="tcss" href="{{BaseUrl}}static/font-awesome/css/font-awesome.css">
+	<link rel="stylesheet" type="tcss" href="{{BaseUrl}}static/bootstrap/css/bootstrap.css">
+	<link rel="stylesheet" type="tcss" href="{{BaseUrl}}static/bootstrap/css/bootstrap-theme.css">
+	<!--
+	<link rel="stylesheet" type="tcss" href="{{BaseUrl}}static/theme/neon/bootstrap-green.css">
+	<link rel="stylesheet" type="tcss" href="{{BaseUrl}}static/theme/neon/core.css">
+	<link rel="stylesheet" type="tcss" href="{{BaseUrl}}static/theme/neon/theme.css">
+	<link rel="stylesheet" type="tcss" href="{{BaseUrl}}static/theme/neon/form.css">
+	-->
+    <link rel="stylesheet" type="tcss" href="{{BaseUrl}}static/css/default.css">
+    
+	<script>
+		var model = {
+			Processing : false
+		};
+	</script>
+</head>
+<body>
+    
+<div>
+    <center>
+       <h3>
+           <a href="{{BaseUrl}}dashboard/index">Dashboard</a>
+           &nbsp;|&nbsp;
+           <a href="{{BaseUrl}}analytic/index">Analytic</a>
+           &nbsp;|&nbsp;
+           <a href="{{BaseUrl}}forecast/index">Forecast</a>
+           &nbsp;|&nbsp;
+           <a href="{{BaseUrl}}sdl/index">Data Browser</a>
+       </h2>
+    </center>
+</div>
+
+<div style="margin:5px">
+{{.Content}}
+</div>
+
+<script>
+ ko.applyBindings(model);
+</script>
+
+</body>
+</html>
