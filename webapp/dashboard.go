@@ -41,7 +41,7 @@ func (d *Dashboard) GetStreamData(ctx *knot.WebContext)interface{}{
 	if e!=nil {
         return result.SetErrorTxt("No new data ingestion")        
     }
-    c.Fetch(latest,1,false)
+    c.Fetch(latest,1,true)
    
    if latest.Timestamp.UTC().Before(inmodel.LastIngestion) || latest.Timestamp.UTC()==inmodel.LastIngestion.UTC() {
        return result.SetErrorTxt("No new data ingestion")    
@@ -54,7 +54,7 @@ func (d *Dashboard) GetStreamData(ctx *knot.WebContext)interface{}{
         return result.SetErrorTxt("Error create cursor: " + e.Error())
     }
     if c.Count() > 0{
-        c.Fetch(&scadas,0,false)
+        c.Fetch(&scadas,0,true)
     }
     result.Data = toolkit.M{}.
         Set("scadas", scadas).
@@ -81,18 +81,18 @@ func (d *Dashboard) GetDaily(ctx *knot.WebContext) interface{} {
 	if e != nil {
 		return result.SetErrorTxt("Can not get latest data. " + e.Error())
 	}
-	defer c.Close()
+	//defer c.Close()
 	if c.Count()==0 {
 		return result.SetErrorTxt("No latest date information received")
 	}
 
-	c.Fetch(latest, 1, false)
+	c.Fetch(latest, 1, true)
 	model.LastUpdate = latest.Timestamp.UTC()
 
 	var scadas []wfmonitor.Scada
 	c, e = db.Find(new(wfmonitor.Scada), toolkit.M{}.
 		Set("where", dbox.Eq("transdate", model.LastUpdate.UTC())))
-	c.Fetch(&scadas, 0, false)
+	c.Fetch(&scadas, 0, true)
 
 	timedatas := prepTimeData(model.LastUpdate)
 	for _, scada := range scadas {

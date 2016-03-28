@@ -54,7 +54,7 @@ func BuildLatest(dates []time.Time) {
 		latest.Timestamp = maxdate
 		DB().Save(latest)
 	} else {
-		e = c.Fetch(latest, 1, false)
+		e = c.Fetch(latest, 1, true)
 		if e != nil {
 			return
 		}
@@ -76,7 +76,7 @@ func BuildSummary(dates []time.Time) error {
 		if c.Count()==0{
             continue
         }
-        c.Fetch(&scadas, 0, false)
+        c.Fetch(&scadas, 0, true)
 
         toolkit.Println("Fetching ", len(scadas))
 		summaries := map[string]*Summary{}
