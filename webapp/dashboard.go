@@ -25,18 +25,40 @@ type timedata struct {
 
 func (d *Dashboard) GetStreamData(ctx *knot.WebContext)interface{}{
     ctx.Config.OutputType = knot.OutputJson
-	result := toolkit.NewResult()
+    result := toolkit.NewResult()
+    
+    inmodel := struct{
+       LastIngestion time.Time 
+    }{}
+    ctx.GetPayload(&inmodel)
     
     db := DB()
     defer db.Close()
     
+    latest := new(wfmonitor.Latest)
+    c, e := db.Find(latest, toolkit.M{}.
+		Set("where", dbox.Eq("_id", "ingestion")))
+	if e!=nil {
+        return result.SetErrorTxt("No new data ingestion")        
+    }
+    c.Fetch(latest,1,false)
+   
+   if latest.Timestamp.UTC().Before(inmodel.LastIngestion) || latest.Timestamp.UTC()==inmodel.LastIngestion.UTC() {
+       return result.SetErrorTxt("No new data ingestion")    
+   } 
     scadas := []wfmonitor.Scada{}
-    c, _ := db.Find(new(wfmonitor.Scada), toolkit.M{}.
-        Set("order",[]string{"-created"}))
+    c, e = db.Find(new(wfmonitor.Scada), toolkit.M{}.
+        Set("order",[]string{"-created"}).
+        Set("take",100))
+    if e!=nil{
+        return result.SetErrorTxt("Error create cursor: " + e.Error())
+    }
     if c.Count() > 0{
         c.Fetch(&scadas,0,false)
     }
-    result.Data = scadas
+    result.Data = toolkit.M{}.
+        Set("scadas", scadas).
+        Set("lastingestion", latest.Timestamp.UTC())
     return result
 }
 
@@ -59,9 +81,8 @@ func (d *Dashboard) GetDaily(ctx *knot.WebContext) interface{} {
 	if e != nil {
 		return result.SetErrorTxt("Can not get latest data. " + e.Error())
 	}
-
 	defer c.Close()
-	if c.Count() == 0 {
+	if c.Count()==0 {
 		return result.SetErrorTxt("No latest date information received")
 	}
 
@@ -85,7 +106,9 @@ func (d *Dashboard) GetDaily(ctx *knot.WebContext) interface{} {
 		model.Power += float32(scada.Power)
 		model.Uptime += scada.ConnectTime
 		model.Downtime += scada.FailureTime
-		model.Speed = (model.Speed*144 + timedatas[ts].Speed/144)
+		/*
+        model.Speed = (model.Speed*144 + timedatas[ts].Speed/144)
+        */
 	}
 
 	model.TimeDatas = func() []timedata {

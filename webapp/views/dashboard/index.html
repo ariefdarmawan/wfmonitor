@@ -5,7 +5,7 @@
                 Generated Power
             </div>
             <div class="panel-body">
-                &nbsp;
+                <div id="chartpower" class="chart3"></div>
             </div>
         </div>
         
@@ -14,7 +14,7 @@
                 Uptime & Downtime
             </div>
             <div class="panel-body">
-                &nbsp;
+                <div id="charttime" class="chart3"></div>
             </div>
         </div>
         
@@ -23,22 +23,23 @@
                 Windspeed
             </div>
             <div class="panel-body">
-                &nbsp;
+                <div id="chartspeed" class="chart3"></div>
             </div>
         </div>
     </div>
     
-    <div class="col-md-6">
+    <div class="col-md-9">
         <div class="panel panel-primary">
             <div class="panel-heading">
                 Data Streaming
             </div>
             <div class="panel-body">
-                &nbsp;
+                <div id="gridstream" style="width:100%"></div>
             </div>
         </div>
     </div>
     
+    <!--
     <div class="col-md-3">
         <div class="panel panel-primary">
             <div class="panel-heading">
@@ -58,9 +59,141 @@
             </div>
         </div>
     </div>
+    -->
 </div>
 
 <script>
+    var columns = [
+            { field: "Turbine", width: 80, locked: true, lockable: true },
+            { field: "Timestamp", title: "Time", width: 200, locked: true, lockable: true, format:"{0:dd-MMM-yy hh:mm:ss}"},
+            { field: "Speed", width: 80, attributes: { style: "text-align:right"}, format:"{0:N1}"},
+            { field: "Direction", width: 80, attributes: { style: "text-align:right"}, format:"{0:N1}"},
+            { field: "Power", width: 80, attributes: { style: "text-align:right"}, format:"{0:N2}"},
+            { field: "FailureTime", title:"Downtime", width: 80, attributes: { style: "text-align:right"}, format:"{0:N1}"},
+            { field: "ConnectTime", title:"Uptime", width: 80, attributes: { style: "text-align:right"}, format:"{0:N1}"},
+            { field: "Created", title: "Ingestion Time", width: 200, locked: true, lockable: true, format:"{0:dd-MMM-yy hh:mm:ss}"}
+            //{ field: "LE", title: "LE", locked: true, lockable: true, columns: [{ field: "LE.Days", title: "Days", width: 100 }, { field: "LE.Cost", title: "Cost", width: 100 }] },
+            //{ field: "OP", title: "OP", locked: true, lockable: true, columns: [{ field: "OP.Days", title: "Days", width: 100 }, { field: "OP.Cost", title: "Cost", width: 100 }] },
+        ];
+
+    model.lastingestion = ko.observable(new Date(5000,1,1));
     $(document).ready(function(){
+        $('#gridstream').kendoGrid({
+                        dataSource: new kendo.data.DataSource({
+                        }),
+                        //pageable: true,
+                        sortable: true,
+                        resizable: true,
+                        height: 400,
+                        columns: columns,
+                        scrollable: true
+                    });
+                    
+         $("#chartpower").kendoChart(makeChartConfig([{
+                field: "Power",
+                color: "#5b8f00"
+            }]));
+            
+        $("#charttime").kendoChart(makeChartConfig([
+                {field: "Uptime"},
+                {field: "Downtime"}
+            ]));
+            
+        $("#chartspeed").kendoChart(makeChartConfig([{
+                field: "Speed",
+                color: "#5b8f00"
+            }]));
+                    
+        checkStream();
+        checkChart();
     })
+    
+    //icheck = 0;
+    function checkStream(){
+        ajaxPost("{{BaseUrl}}dashboard/getstreamdata",
+        {},
+        function(result){
+            if(result.Status!="OK"){
+                dsData = []
+            } else {
+                model.lastingestion(result.Data.lastingestion);
+                dsData = result.Data.scadas;
+            }
+            
+            $("#gridstream").data("kendoGrid").setDataSource(new kendo.data.DataSource({
+                data: dsData
+            }));
+            window.setTimeout(checkStream,10000);    
+        });
+    }
+    
+    function makeChartConfig(series){
+        var config= {
+            dataSource: new kendo.data.DataSource({}),
+            seriesDefaults: {
+                type: "area"
+            },
+            chartArea:{
+                height:320,
+                height:123  
+            },
+            categoryAxis: {
+                field: "TimeStamp",
+                labels: {
+                    visible:false,
+                    rotation: -90
+                },
+                crosshair: {
+                    visible: true
+                },
+                majorGridLines:{
+                    visible:false
+                },
+                minorGridLines:{
+                    visible:false
+                }
+            },
+            valueAxis: {
+                labels: {
+                    format: "N2",
+                    font:"8px calibri"
+                },
+                //,
+                //majorUnit: 10000
+            },
+            tooltip: {
+                visible: true,
+                shared: true,
+                format: "N1"
+            },
+            series: series
+         };
+         return config;
+    }
+    
+    function checkChart(){
+        ajaxPost("{{BaseUrl}}dashboard/getdaily",
+        {},
+        function(result){
+            if(result.Status!="OK"){
+                dsData = []
+            } else {
+                model.lastingestion(result.Data.lastingestion);
+                dsData = result.Data.TimeDatas;
+            }
+            
+            $("#chartpower").data("kendoChart").setDataSource(new kendo.data.DataSource({
+                data: dsData
+            }));
+            
+            $("#charttime").data("kendoChart").setDataSource(new kendo.data.DataSource({
+                data: dsData
+            }));
+            
+            $("#chartspeed").data("kendoChart").setDataSource(new kendo.data.DataSource({
+                data: dsData
+            }));
+            window.setTimeout(checkChart,3000);    
+        });
+    }
 </script>

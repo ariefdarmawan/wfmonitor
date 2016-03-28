@@ -25,6 +25,13 @@ func (s *Latest) RecordID() interface{} {
 	return s.ID
 }
 
+func BuildLatestRead(){
+    latest := new(Latest)
+    latest.ID = "ingestion"
+    latest.Timestamp = time.Now()
+    DB().Save(latest)
+}
+
 func BuildLatest(dates []time.Time) {
 	var maxdate time.Time
 	for i, d := range dates {
@@ -75,12 +82,12 @@ func BuildSummary(dates []time.Time) error {
 		summaries := map[string]*Summary{}
 		for _, scada := range scadas {
 			var summary *Summary
-			sid := toolkit.Sprintf("%s-%s", scada.Turbine, toolkit.Date2String(scada.Timestamp, "YYYYMMdd"))
+			sid := toolkit.Sprintf("%s-%s", scada.Turbine, toolkit.Date2String(scada.TransDate.UTC(), "YYYYMMdd"))
 			if _, exist := summaries[sid]; !exist {
 				summary = new(Summary)
 				summary.ID = sid
 				summary.Turbine = scada.Turbine
-				summary.TransDate = scada.TransDate
+				summary.TransDate = scada.TransDate.UTC()
                 summaries[sid]=summary
 			} else {
 				summary = summaries[sid]
@@ -96,6 +103,7 @@ func BuildSummary(dates []time.Time) error {
 			summary.Temp = (summary.Temp*oldcount + scada.Temp) / newcount
 			summary.Nacel = scada.Nacel
 			summary.Direction = scada.Direction
+            //summary.Created = time.Now()
 		}
 
 		for _, summary := range summaries {

@@ -39,7 +39,7 @@ type Summary struct {
 	Speed, Direction, Nacel, Temp, FailureTime, ConnectTime, FullTime float32
 	Power                                                             float64
 	ChildCount                                                        int
-	Created, LastUpdated                                              time.Time
+	//Created, LastUpdated                                              time.Time
 }
 
 func (s *Summary) TableName() string {

@@ -97,11 +97,12 @@ func prepareInbox() *uklam.FSWalker {
 }
 
 func prepareRunning() *uklam.FSWalker {
-	w2 := uklam.NewFS(filepath.Join(path, "running"))
+    w2 := uklam.NewFS(filepath.Join(path, "running"))
 	w2.EachFn = func(dw uklam.IDataWalker, in toolkit.M, info os.FileInfo, r *toolkit.Result) {
 		//go func(info os.FileInfo) {
 		//time.Sleep(10 * time.Millisecond)
-		sourcename := filepath.Join(path, "running", info.Name())
+		wfmonitor.BuildLatestRead()
+	    sourcename := filepath.Join(path, "running", info.Name())
 		dstnameOK := filepath.Join(path, "success", info.Name())
 		dstnameNOK := filepath.Join(path, "fail", info.Name())
 		log.Info(toolkit.Sprintf("Reading %s", sourcename))
